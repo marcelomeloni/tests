@@ -560,7 +560,16 @@ async function grantAchievement(achievementId) {
         
         if (existing && existing.length > 0) return;
         
-        // Conceder conquista
+        // Buscar dados da conquista
+        const { data: achievement, error: achievementError } = await supabase
+            .from('achievements')
+            .select('*')
+            .eq('id', achievementId)
+            .single();
+        
+        if (achievementError) throw achievementError;
+        
+        // Conceder conquista e creditar recompensa
         const { error } = await supabase
             .from('user_achievements')
             .insert({
@@ -571,19 +580,28 @@ async function grantAchievement(achievementId) {
         
         if (error) throw error;
         
-        // Buscar dados da conquista para mostrar notificação
-        const { data: achievement, error: achievementError } = await supabase
-            .from('achievements')
-            .select('*')
-            .eq('id', achievementId)
-            .single();
+        // ATUALIZAR SALDO DO USUÁRIO (recompensa da conquista)
+        const { error: userError } = await supabase
+            .from('users')
+            .update({
+                sun_balance: (userData.sun_balance || 0) + achievement.sun_reward,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userData.id);
         
-        if (!achievementError) {
-            showAchievementNotification(achievement);
-        }
+        if (userError) throw userError;
+        
+        // Atualizar dados locais do usuário
+        userData.sun_balance += achievement.sun_reward;
+        updateUserUI();
+        
+        // Mostrar notificação
+        showAchievementNotification(achievement);
         
         // Recarregar conquistas
         await loadAchievements();
+        
+        console.log(`Conquista concedida: +${achievement.sun_reward} SUN`);
     } catch (error) {
         console.error('Erro ao conceder conquista:', error);
     }
@@ -599,7 +617,8 @@ function showAchievementNotification(achievement) {
         </div>
         <div class="notification-content">
             <h3>Conquista Desbloqueada!</h3>
-            <p>${achievement.name} - ${achievement.sun_reward} SUN</p>
+            <p>${achievement.name}</p>
+            <p class="reward-amount">+ ${achievement.sun_reward} SUN</p>
         </div>
     `;
     
@@ -616,7 +635,6 @@ function showAchievementNotification(achievement) {
         }, 500);
     }, 5000);
 }
-
 // Configura os listeners de eventos
 function setupEventListeners() {
     // Logout
