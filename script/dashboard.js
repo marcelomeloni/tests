@@ -547,7 +547,7 @@ async function checkAchievements() {
 // Conceder conquista
 async function grantAchievement(achievementId) {
     try {
-        // Verificar se já foi concedida
+        // Verificar se já foi concedida (CORREÇÃO)
         const { data: existing, error: checkError } = await supabase
             .from('user_achievements')
             .select()
@@ -559,7 +559,11 @@ async function grantAchievement(achievementId) {
             return;
         }
 
-        if (existing && existing.length > 0) return;
+        // CORREÇÃO: Verificação correta de conquista existente
+        if (existing && existing.length > 0) {
+            console.log(`Conquista ${achievementId} já concedida ao usuário`);
+            return;
+        }
 
         // Buscar dados da conquista
         const { data: achievement, error: achievementError } = await supabase
@@ -592,8 +596,11 @@ async function grantAchievement(achievementId) {
 
         if (userError) throw userError;
 
-        // Atualizar dados locais do usuário
-        userData.total_points += achievement.points_reward;
+        // Atualizar dados locais do usuário (CORREÇÃO: usando novo valor)
+        const newPoints = (userData.total_points || 0) + achievement.points_reward;
+        userData.total_points = newPoints;
+        
+        // Atualizar UI
         updateUserUI();
 
         // Mostrar notificação
