@@ -520,7 +520,7 @@ async function importWallet() {
         return;
     }
     
-    showImportStatus('Importando sua carteira...', 'loading');
+    showImportStatus('Importing your wallet...', 'loading');
     
     try {
         const res = await fetch('https://airdrop-sunaryum.onrender.com/api/wallet/import', {
