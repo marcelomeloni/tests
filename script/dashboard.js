@@ -472,20 +472,21 @@ async function loadAchievements() {
 
         // Adicionar conquistas à UI
         achievements.forEach(achievement => {
-            // ... código existente ...
-
+            // CORREÇÃO: Criar o elemento corretamente
+            const achievementCard = document.createElement('div');
+            achievementCard.className = 'achievement-card completed';
+            
             achievementCard.innerHTML = `
-                        <div class="achievement-icon">
-                            <i class="${achievement.icon || 'fas fa-trophy'}"></i>
-                        </div>
-                        <h3>${achievement.name}</h3>
-                        <p>${achievement.description}</p>
-                        <div class="achievement-reward">
-                            <i class="fas fa-award"></i> Recompensa: ${achievement.points_reward} pontos
-                            <i class="fas fa-check completed-badge"></i>
-                        </div>
-                    `;
-
+                <div class="achievement-icon">
+                    <i class="${achievement.icon || 'fas fa-trophy'}"></i>
+                </div>
+                <h3>${achievement.name}</h3>
+                <p>${achievement.description}</p>
+                <div class="achievement-reward">
+                    <i class="fas fa-award"></i> Recompensa: ${achievement.points_reward} pontos
+                    <i class="fas fa-check completed-badge"></i>
+                </div>
+            `;
 
             achievementsGrid.appendChild(achievementCard);
         });
@@ -732,7 +733,6 @@ async function completeMission(missionId, button) {
     }
 }
 
-// Check-in diário
 async function handleDailyCheckin() {
     if (!currentUser || !userData || hasCheckedInToday()) return;
 
@@ -749,8 +749,9 @@ async function handleDailyCheckin() {
         const streakMultiplier = Math.min(Math.floor(newStreak / 7), 5);
         const pointsEarned = basePoints * (1 + streakMultiplier * 0.5);
 
-        // Verifica se é o primeiro check-in
-        const isFirstCheckin = userData.streak === 0 && !userData.last_checkin;
+        // CORREÇÃO: Verificação correta do primeiro login
+        const isFirstCheckin = userData.total_checkins === 0 || 
+                              (!userData.last_checkin && userData.streak === 0);
 
         // Atualiza no Supabase
         const { error } = await supabase
@@ -759,6 +760,7 @@ async function handleDailyCheckin() {
                 last_checkin: now,
                 streak: newStreak,
                 total_points: (userData.total_points || 0) + pointsEarned,
+                total_checkins: (userData.total_checkins || 0) + 1, // Novo campo
                 updated_at: now
             })
             .eq('id', userData.id);
@@ -769,7 +771,6 @@ async function handleDailyCheckin() {
         if (isFirstCheckin) {
             await grantAchievement('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
         }
-
 
         // Recarrega dados do servidor
         await loadUserData();
