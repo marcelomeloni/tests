@@ -445,7 +445,7 @@ async function loadAchievements() {
             .from('user_achievements')
             .select(`
                 achievements:achievements (
-                    id, name, description, icon, sun_reward,
+                    id, name, description, icon, points_reward,
                     condition_type, condition_value
                 )
             `)
