@@ -329,7 +329,7 @@ async function loadMissions() {
                 <p class="mission-description">${mission.description}</p>
                 <div class="mission-rewards">
                     <div class="reward-badge">
-                        <span class="reward-label">Pontos</span>
+                        <span class="reward-label">Points</span>
                         <span class="reward-value points">${mission.points_reward}</span>
                     </div>
                     <div class="reward-badge">
@@ -434,53 +434,57 @@ async function createNewUser(walletAddress) {
     }
 }
 
-// Carrega conquistas do banco de dados
+// Carrega conquistas do banco de dados com progresso
 async function loadAchievements() {
     try {
         if (!achievementsGrid) return;
         
-        // Mostrar estado de carregamento
         achievementsGrid.innerHTML = '<p class="loading-achievements">Carregando conquistas...</p>';
 
-        // Buscar conquistas e conquistas do usuário separadamente
-        const { data: achievements, error: achError } = await supabase
-            .from('achievements')
-            .select('*')
-            .eq('is_active', true);
-        
-        if (achError) throw achError;
-        
+        // Buscar conquistas COMPLETADAS pelo usuário
         const { data: userAchievements, error: uaError } = await supabase
             .from('user_achievements')
-            .select('achievement_id')
+            .select(`
+                achievements:achievements (
+                    id, name, description, icon, sun_reward,
+                    condition_type, condition_value
+                )
+            `)
             .eq('user_id', userData.id);
-        
+
         if (uaError) throw uaError;
         
+        // Extrair conquistas do resultado
+        const achievements = userAchievements.map(ua => ua.achievements).filter(a => a.is_active);
+
         // Limpar grid
         achievementsGrid.innerHTML = '';
-        
+
+        if (!achievements || achievements.length === 0) {
+            achievementsGrid.innerHTML = `
+                <div class="empty-message">
+                    <i class="fas fa-trophy"></i>
+                    <p>Nenhuma conquista completada ainda</p>
+                    <p>Complete missões para desbloquear conquistas!</p>
+                </div>
+            `;
+            return;
+        }
+
         // Adicionar conquistas à UI
         achievements.forEach(achievement => {
-            const isCompleted = userAchievements.some(
-                ua => ua.achievement_id === achievement.id
-            );
-            
             const achievementCard = document.createElement('div');
-            achievementCard.className = `achievement-card ${isCompleted ? 'completed' : ''}`;
+            achievementCard.className = 'achievement-card completed';
             
             achievementCard.innerHTML = `
                 <div class="achievement-icon">
-                    <i class="fas fa-${isCompleted ? 'trophy' : 'lock'}"></i>
+                    <i class="${achievement.icon || 'fas fa-trophy'}"></i>
                 </div>
                 <h3>${achievement.name}</h3>
                 <p>${achievement.description}</p>
-                <div class="achievement-progress">
-                    <div class="progress-bar" style="width: ${isCompleted ? '100' : '0'}%"></div>
-                </div>
                 <div class="achievement-reward">
-                    Recompensa: ${achievement.sun_reward} SUN
-                    ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
+                    <i class="fas fa-award"></i> Recompensa: ${achievement.sun_reward} SUN
+                    <i class="fas fa-check completed-badge"></i>
                 </div>
             `;
             
@@ -488,11 +492,18 @@ async function loadAchievements() {
         });
     } catch (error) {
         console.error('Erro ao carregar conquistas:', error);
-        if (achievementsGrid) {
-            achievementsGrid.innerHTML = '<p class="error-achievements">Erro ao carregar conquistas</p>';
-        }
+        achievementsGrid.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Erro ao carregar conquistas</p>
+            </div>
+        `;
     }
 }
+
+
+
+
 
 // Verificar conquistas
 async function checkAchievements() {
