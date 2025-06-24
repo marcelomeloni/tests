@@ -547,34 +547,33 @@ async function checkAchievements() {
 // Conceder conquista
 async function grantAchievement(achievementId) {
     try {
-        // Verificar se já foi concedida (CORREÇÃO)
+        // Verificar se já foi concedida
         const { data: existing, error: checkError } = await supabase
             .from('user_achievements')
             .select()
             .eq('user_id', userData.id)
             .eq('achievement_id', achievementId);
-
+        
         if (checkError) {
             console.warn('Erro ao verificar conquista:', checkError);
             return;
         }
-
-        // CORREÇÃO: Verificação correta de conquista existente
+        
         if (existing && existing.length > 0) {
             console.log(`Conquista ${achievementId} já concedida ao usuário`);
             return;
         }
-
+        
         // Buscar dados da conquista
         const { data: achievement, error: achievementError } = await supabase
             .from('achievements')
             .select('*')
             .eq('id', achievementId)
             .single();
-
+        
         if (achievementError) throw achievementError;
-
-        // Conceder conquista e creditar pontos
+        
+        // Conceder conquista
         const { error } = await supabase
             .from('user_achievements')
             .insert({
@@ -582,9 +581,9 @@ async function grantAchievement(achievementId) {
                 achievement_id: achievementId,
                 achieved_at: new Date().toISOString()
             });
-
+        
         if (error) throw error;
-
+        
         // ATUALIZAR PONTOS DO USUÁRIO
         const { error: userError } = await supabase
             .from('users')
@@ -593,22 +592,19 @@ async function grantAchievement(achievementId) {
                 updated_at: new Date().toISOString()
             })
             .eq('id', userData.id);
-
-        if (userError) throw userError;
-
-        // Atualizar dados locais do usuário (CORREÇÃO: usando novo valor)
-        const newPoints = (userData.total_points || 0) + achievement.points_reward;
-        userData.total_points = newPoints;
         
-        // Atualizar UI
+        if (userError) throw userError;
+        
+        // Atualizar dados locais do usuário
+        userData.total_points = (userData.total_points || 0) + achievement.points_reward;
         updateUserUI();
-
+        
         // Mostrar notificação
         showAchievementNotification(achievement);
-
+        
         // Recarregar conquistas
         await loadAchievements();
-
+        
         console.log(`Conquista concedida: +${achievement.points_reward} pontos`);
     } catch (error) {
         console.error('Erro ao conceder conquista:', error);
@@ -750,13 +746,13 @@ async function handleDailyCheckin() {
 
         const now = new Date().toISOString();
         const newStreak = calculateNewStreak(userData.last_checkin);
-
+        
         // CALCULA PONTOS COM BASE NO STREAK
         const basePoints = 10;
         const streakMultiplier = Math.min(Math.floor(newStreak / 7), 5);
         const pointsEarned = basePoints * (1 + streakMultiplier * 0.5);
 
-        // CORREÇÃO: Verificação correta do primeiro login
+        // Verificação correta do primeiro login
         const isFirstCheckin = userData.total_checkins === 0 || 
                               (!userData.last_checkin && userData.streak === 0);
 
@@ -767,29 +763,35 @@ async function handleDailyCheckin() {
                 last_checkin: now,
                 streak: newStreak,
                 total_points: (userData.total_points || 0) + pointsEarned,
-                total_checkins: (userData.total_checkins || 0) + 1, // Novo campo
+                total_checkins: (userData.total_checkins || 0) + 1,
                 updated_at: now
             })
             .eq('id', userData.id);
 
         if (error) throw error;
 
+        // Atualiza dados locais imediatamente
+        userData.last_checkin = now;
+        userData.streak = newStreak;
+        userData.total_points = (userData.total_points || 0) + pointsEarned;
+        userData.total_checkins = (userData.total_checkins || 0) + 1;
+        updateUserUI();
+
         // Concede a conquista de primeiro login se for o caso
         if (isFirstCheckin) {
             await grantAchievement('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
         }
 
-        // Recarrega dados do servidor
+        // Recarrega dados do servidor para garantir sincronização
         await loadUserData();
         await checkAchievements();
-
+        
         // Feedback visual
-        let message = `<i class="fas fa-check-circle"></i> Check-in realizado!`;
-        checkinBtn.innerHTML = message;
+        checkinBtn.innerHTML = `<i class="fas fa-check-circle"></i> Check-in realizado!`;
         checkinBtn.classList.remove('processing');
         checkinBtn.classList.add('success');
         triggerConfettiEffect();
-
+        
         // Resetar o botão após 5 segundos
         setTimeout(() => {
             checkinBtn.classList.remove('success');

@@ -72,7 +72,8 @@ async function registerOrUpdateUser(walletAddress) {
                     wallet_address: walletAddress,
                     username,
                     created_at: now,
-                    last_login: now
+                    last_login: now,
+                    total_checkins: 0 
                 })
                 .select('id')
                 .maybeSingle();
