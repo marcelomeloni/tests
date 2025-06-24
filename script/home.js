@@ -318,7 +318,7 @@ function resetModalState() {
     }
     
     if (modalElements.generateSeedBtn) {
-        modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-sync"></i> Gerar Nova Seed';
+        modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-sync"></i> Generate New Seed';
         modalElements.generateSeedBtn.disabled = false;
     }
     
@@ -373,7 +373,7 @@ async function generateSeedPhrase() {
     
     try {
         const originalHTML = modalElements.generateSeedBtn.innerHTML;
-        modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+        modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         modalElements.generateSeedBtn.disabled = true;
         
         const res = await fetch('https://airdrop-sunaryum.onrender.com/api/wallet/create');
@@ -392,7 +392,7 @@ async function generateSeedPhrase() {
         modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro - Tentar novamente';
         
         setTimeout(() => {
-            modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-sync"></i> Gerar Nova Seed';
+            modalElements.generateSeedBtn.innerHTML = '<i class="fas fa-sync"></i> Generate Seed';
             modalElements.generateSeedBtn.disabled = false;
         }, 2000);
     }
@@ -429,7 +429,7 @@ function updateVisibilityUI() {
     const textSpan = modalElements.toggleVisibilityBtn?.querySelector('span');
     
     if (textSpan) {
-        textSpan.textContent = modalState.isSeedVisible ? 'Ocultar Seed' : 'Mostrar Seed';
+        textSpan.textContent = modalState.isSeedVisible ? 'Hide Seed' : 'Show Seed';
     }
     
     if (icon) {
@@ -462,7 +462,7 @@ function copySeedPhrase() {
             const span = modalElements.copySeedBtn.querySelector('span');
             if (span) {
                 const originalText = span.textContent;
-                span.textContent = 'Copiado!';
+                span.textContent = 'Copied!';
                 modalElements.copySeedBtn.disabled = true;
                 
                 setTimeout(() => {
@@ -490,7 +490,7 @@ async function handleWalletCreation() {
     modalElements.seedInput.value = walletData.mnemonic;
     modalElements.importTab.click();
     
-    modalElements.importStatus.textContent = 'Processando sua nova carteira...';
+    modalElements.importStatus.textContent = 'Processing your new wallet...';
     modalElements.importStatus.className = 'status-message';
     
     setTimeout(importWallet, 1000);
@@ -516,7 +516,7 @@ async function importWallet() {
     const words = seed.split(/\s+/);
     
     if (words.length !== 12) {
-        showImportStatus('Por favor, insira uma seed válida de 12 palavras.', 'error');
+        showImportStatus('Please enter a valid 12 word seed.', 'error');
         return;
     }
     
@@ -537,7 +537,7 @@ async function importWallet() {
         const data = await res.json();
         saveWalletData(data);
         await finalizeWalletSetup(data.address);
-        showImportStatus('✅ Carteira importada com sucesso! Redirecionando...', 'success');
+        showImportStatus('✅ Wallet imported successfully! Redirecting...', 'success');
         
     } catch (error) {
         console.error('Erro na importação:', error);

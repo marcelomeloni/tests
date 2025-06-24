@@ -168,7 +168,7 @@ function updateCheckinButtonState() {
         startCheckinCooldown();
     } else {
         checkinBtn.disabled = false;
-        checkinBtn.innerHTML = 'Check-in Diário';
+        checkinBtn.innerHTML = 'Daily Check-in';
     }
 }
 
@@ -194,7 +194,7 @@ function startCheckinCooldown() {
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
         
         checkinBtn.innerHTML = `
-            <i class="fas fa-clock"></i> Próximo check-in em 
+            <i class="fas fa-clock"></i> Next check-in in 
             ${hours}h ${Math.round(minutes)}m
         `;
     }
@@ -300,7 +300,7 @@ async function loadMissions() {
             if (isCompleted) {
                 actionButton = `
                     <button class="mission-completed" disabled>
-                        <i class="fas fa-check-circle"></i> Completo
+                        <i class="fas fa-check-circle"></i> Done
                     </button>
                 `;
             } else if (mission.action_url) {
@@ -309,7 +309,7 @@ async function loadMissions() {
                        target="_blank" 
                        class="mission-link" 
                        data-id="${mission.id}">
-                        Visitar Link
+                        Visit Link
                     </a>
                 `;
             } else {
@@ -710,7 +710,7 @@ async function handleDailyCheckin() {
 
     try {
         checkinBtn.disabled = true;
-        checkinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        checkinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
         checkinBtn.classList.add('processing');
 
         const now = new Date().toISOString();
