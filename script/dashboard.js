@@ -434,14 +434,13 @@ async function createNewUser(walletAddress) {
     }
 }
 
-// Carrega conquistas do banco de dados com progresso
 async function loadAchievements() {
     try {
         if (!achievementsGrid) return;
         
         achievementsGrid.innerHTML = '<p class="loading-achievements">Carregando conquistas...</p>';
 
-        // Buscar conquistas COMPLETADAS pelo usuário
+        // Buscar apenas conquistas COMPLETADAS pelo usuário
         const { data: userAchievements, error: uaError } = await supabase
             .from('user_achievements')
             .select(`
@@ -455,7 +454,7 @@ async function loadAchievements() {
         if (uaError) throw uaError;
         
         // Extrair conquistas do resultado
-        const achievements = userAchievements.map(ua => ua.achievements).filter(a => a.is_active);
+        const achievements = userAchievements.map(ua => ua.achievements);
 
         // Limpar grid
         achievementsGrid.innerHTML = '';
@@ -505,7 +504,6 @@ async function loadAchievements() {
 
 
 
-// Verificar conquistas
 async function checkAchievements() {
     try {
         // Buscar conquistas
@@ -518,7 +516,7 @@ async function checkAchievements() {
         
         // Verificar cada conquista
         for (const achievement of achievements) {
-            if (!achievement.condition_type || !achievement.condition_value) continue;
+            if (!achievement.condition_type) continue;
             
             let conditionMet = false;
             
@@ -532,6 +530,9 @@ async function checkAchievements() {
                 case 'points':
                     conditionMet = userData.total_points >= achievement.condition_value;
                     break;
+                case 'sun_balance':
+                    conditionMet = userData.sun_balance >= achievement.condition_value;
+                    break;
             }
             
             if (conditionMet) {
@@ -542,7 +543,6 @@ async function checkAchievements() {
         console.error('Erro ao verificar conquistas:', error);
     }
 }
-
 // Conceder conquista
 async function grantAchievement(achievementId) {
     try {
